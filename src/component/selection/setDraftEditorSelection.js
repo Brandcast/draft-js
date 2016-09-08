@@ -34,14 +34,17 @@ function setDraftEditorSelection(
   nodeStart: number,
   nodeEnd: number
 ): void {
+
+  var ownerDocument = node.ownerDocument;
+
   // It's possible that the editor has been removed from the DOM but
   // our selection code doesn't know it yet. Forcing selection in
   // this case may lead to errors, so just bail now.
-  if (!containsNode(document.documentElement, node)) {
+  if (!containsNode(ownerDocument.documentElement, node)) {
     return;
   }
 
-  var selection = global.getSelection();
+  var selection = ownerDocument.defaultView.getSelection();
   var anchorKey = selectionState.getAnchorKey();
   var anchorOffset = selectionState.getAnchorOffset();
   var focusKey = selectionState.getFocusKey();
@@ -149,7 +152,7 @@ function addPointToSelection(
   node: Node,
   offset: number
 ): void {
-  var range = document.createRange();
+  var range = node.ownerDocument.createRange();
   range.setStart(node, offset);
   selection.addRange(range);
 }

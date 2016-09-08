@@ -31,9 +31,9 @@ function getLineHeightPx(element: Element): number {
   div.textContent = 'M';
 
   // forced layout here
-  document.body.appendChild(div);
+  element.ownerDocument.body.appendChild(div);
   var rect = div.getBoundingClientRect();
-  document.body.removeChild(div);
+  element.ownerDocument.body.removeChild(div);
 
   return rect.height;
 }
