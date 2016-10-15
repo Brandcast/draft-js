@@ -128,7 +128,7 @@ function addFocusToSelection(
   node: Node,
   offset: number
 ): void {
-  if (selection.extend && containsNode(getActiveElement(), node)) {
+  if (selection.extend && containsNode(getActiveElement(node.ownerDocument), node)) {
     // If `extend` is called while another element has focus, an error is
     // thrown. We therefore disable `extend` if the active element is somewhere
     // other than the node we are selecting. This should only occur in Firefox,

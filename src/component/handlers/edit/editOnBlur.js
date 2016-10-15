@@ -28,10 +28,10 @@ function editOnBlur(editor: DraftEditor, e: SyntheticEvent): void {
   // issue to be certain, checking whether the active element is `body`
   // to force it when blurring occurs within the window (as opposed to
   // clicking to another tab or window).
-  var activeElement = getActiveElement();
-  var ownerDocument = activeElement.ownerDocument;
-  if (isWebKit && activeElement === ownerDocument.body) {
-    ownerDocument.defaultView.getSelection().removeAllRanges();
+  var doc = e.target && e.target.ownerDocument || document;
+  var activeElement = getActiveElement(doc);
+  if (isWebKit && activeElement === doc.body) {
+    doc.defaultView.getSelection().removeAllRanges();
   }
 
   var editorState = editor._latestEditorState;
