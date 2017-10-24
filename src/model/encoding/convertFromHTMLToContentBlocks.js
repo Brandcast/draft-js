@@ -230,11 +230,10 @@ function processInlineTag(
   currentStyle: DraftInlineStyle,
 ): DraftInlineStyle {
   var styleToCheck = inlineTags[tag];
-  var win = node.ownerDocument.defaultView || window;
   if (styleToCheck) {
     currentStyle = currentStyle.add(styleToCheck).toOrderedSet();
-  } else if (node instanceof win.HTMLElement) {
-    const htmlElement = node;
+  } else if (node.nodeType === 1) {
+    const htmlElement: HTMLElement = (node: any);
     currentStyle = currentStyle.withMutations(style => {
       const fontWeight = htmlElement.style.fontWeight;
       const fontStyle = htmlElement.style.fontStyle;
@@ -317,16 +316,16 @@ function containsSemanticBlockMarkup(
 }
 
 function hasValidLinkText(link: Node): boolean {
-  const win = link.ownerDocument.defaultView || window;
   invariant(
-    link instanceof win.HTMLAnchorElement,
+    link.nodeName === 'A',
     'Link must be an HTMLAnchorElement.',
   );
-  var protocol = link.protocol;
+
+  const element: HTMLAnchorElement = (link: any);
   return (
-    protocol === 'http:' ||
-    protocol === 'https:' ||
-    protocol === 'mailto:'
+    element.protocol === 'http:' ||
+    element.protocol === 'https:' ||
+    element.protocol === 'mailto:'
   );
 }
 
@@ -389,37 +388,35 @@ function genFragment(
     return {chunk: getSoftNewlineChunk(), entityMap};
   }
 
-  const win = node.ownerDocument.defaultView || window;
-
   // IMG tags
-  if (
-    nodeName === 'img' &&
-    node instanceof win.HTMLImageElement &&
-    node.attributes.getNamedItem('src') &&
-    node.attributes.getNamedItem('src').value
-  ) {
-    const image: HTMLImageElement = node;
-    const entityConfig = {};
+  if (nodeName === 'img') {
+    const image: HTMLImageElement = (node: any);
+    if (
+      image.attributes.getNamedItem('src') &&
+      image.attributes.getNamedItem('src').value
+    ) {
+      const entityConfig = {};
 
-    imgAttr.forEach((attr) => {
-      const imageAttribute = image.getAttribute(attr);
-      if (imageAttribute) {
-        entityConfig[attr] = imageAttribute;
-      }
-    });
-    // Forcing this node to have children because otherwise no entity will be
-    // created for this node.
-    // The child text node cannot just have a space or return as content -
-    // we strip those out.
-    // See https://github.com/facebook/draft-js/issues/231 for some context.
-    node.textContent = '\ud83d\udcf7';
+      imgAttr.forEach((attr) => {
+        const imageAttribute = image.getAttribute(attr);
+        if (imageAttribute) {
+          entityConfig[attr] = imageAttribute;
+        }
+      });
+      // Forcing this node to have children because otherwise no entity will be
+      // created for this node.
+      // The child text node cannot just have a space or return as content -
+      // we strip those out.
+      // See https://github.com/facebook/draft-js/issues/231 for some context.
+      node.textContent = '\ud83d\udcf7';
 
-    // TODO: update this when we remove DraftEntity entirely
-    inEntity = DraftEntity.__create(
-      'IMAGE',
-      'MUTABLE',
-      entityConfig || {},
-    );
+      // TODO: update this when we remove DraftEntity entirely
+      inEntity = DraftEntity.__create(
+        'IMAGE',
+        'MUTABLE',
+        entityConfig || {},
+      );
+    }
   }
 
   var chunk = getEmptyChunk();
@@ -465,63 +462,64 @@ function genFragment(
   var entityId: ?string = null;
 
   while (child) {
-    if (
-      child instanceof win.HTMLAnchorElement &&
-      child.href &&
-      hasValidLinkText(child)
-    ) {
-      const anchor: HTMLAnchorElement = child;
-      const entityConfig = {};
+    if (nodeName === 'a') {
+      const anchor: HTMLAnchorElement = (child: any);
+      if (
+        anchor.href &&
+        hasValidLinkText(anchor)
+      ) {
+        const entityConfig = {};
 
-      anchorAttr.forEach((attr) => {
-        const anchorAttribute = anchor.getAttribute(attr);
-        if (anchorAttribute) {
-          entityConfig[attr] = anchorAttribute;
-        }
-      });
+        anchorAttr.forEach((attr) => {
+          const anchorAttribute = anchor.getAttribute(attr);
+          if (anchorAttribute) {
+            entityConfig[attr] = anchorAttribute;
+          }
+        });
 
-      entityConfig.url = new URI(anchor.href).toString();
-      // TODO: update this when we remove DraftEntity completely
-      entityId = DraftEntity.__create(
-        'LINK',
-        'MUTABLE',
-        entityConfig || {},
+        entityConfig.url = new URI(anchor.href).toString();
+        // TODO: update this when we remove DraftEntity completely
+        entityId = DraftEntity.__create(
+          'LINK',
+          'MUTABLE',
+          entityConfig || {},
+        );
+      } else {
+        entityId = undefined;
+      }
+
+      const {
+        chunk: generatedChunk,
+        entityMap: maybeUpdatedEntityMap,
+      } = genFragment(
+        newEntityMap,
+        child,
+        inlineStyle,
+        lastList,
+        inBlock,
+        blockTags,
+        depth,
+        blockRenderMap,
+        entityId || inEntity,
       );
-    } else {
-      entityId = undefined;
-    }
 
-    const {
-      chunk: generatedChunk,
-      entityMap: maybeUpdatedEntityMap,
-    } = genFragment(
-      newEntityMap,
-      child,
-      inlineStyle,
-      lastList,
-      inBlock,
-      blockTags,
-      depth,
-      blockRenderMap,
-      entityId || inEntity,
-    );
+      newChunk = generatedChunk;
+      newEntityMap = maybeUpdatedEntityMap;
 
-    newChunk = generatedChunk;
-    newEntityMap = maybeUpdatedEntityMap;
+      chunk = joinChunks(chunk, newChunk);
+      var sibling: ?Node = child.nextSibling;
 
-    chunk = joinChunks(chunk, newChunk);
-    var sibling: ?Node = child.nextSibling;
-
-    // Put in a newline to break up blocks inside blocks
-    if (
-      sibling &&
-      blockTags.indexOf(nodeName) >= 0 &&
-      inBlock
-    ) {
-      chunk = joinChunks(chunk, getSoftNewlineChunk());
-    }
-    if (sibling) {
-      nodeName = sibling.nodeName.toLowerCase();
+      // Put in a newline to break up blocks inside blocks
+      if (
+        sibling &&
+        blockTags.indexOf(nodeName) >= 0 &&
+        inBlock
+      ) {
+        chunk = joinChunks(chunk, getSoftNewlineChunk());
+      }
+      if (sibling) {
+        nodeName = sibling.nodeName.toLowerCase();
+      }
     }
     child = sibling;
   }
