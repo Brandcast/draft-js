@@ -26,16 +26,20 @@ const Immutable = require('immutable');
 const SelectionState = require('SelectionState');
 
 const generateRandomKey = require('generateRandomKey');
+const invariant = require('invariant');
+const nullthrows = require('nullthrows');
 const sanitizeDraftText = require('sanitizeDraftText');
 
 const {List, Record, Repeat} = Immutable;
 
-const defaultRecord: {
+type RecordProps = {
   entityMap: ?any,
   blockMap: ?BlockMap,
   selectionBefore: ?SelectionState,
   selectionAfter: ?SelectionState,
-} = {
+};
+
+const defaultRecord: RecordProps = {
   entityMap: null,
   blockMap: null,
   selectionBefore: null,
@@ -44,7 +48,7 @@ const defaultRecord: {
 
 const ContentStateRecord = Record(defaultRecord);
 
-class ContentState extends ContentStateRecord {
+class ContentState extends ContentStateRecord<RecordProps> {
 
   getEntityMap(): any {
     // TODO: update this when we fully remove DraftEntity
@@ -52,20 +56,25 @@ class ContentState extends ContentStateRecord {
   }
 
   getBlockMap(): BlockMap {
-    return this.get('blockMap');
+    const blockMap = this.get('blockMap');
+    invariant(blockMap, 'ContentState missing blockMap');
+    return blockMap;
   }
 
   getSelectionBefore(): SelectionState {
-    return this.get('selectionBefore');
+    const selection = this.get('selectionBefore');
+    invariant(selection, 'ContentState missing selectionBefore');
+    return selection;
   }
 
   getSelectionAfter(): SelectionState {
-    return this.get('selectionAfter');
+    const selection = this.get('selectionAfter');
+    invariant(selection, 'ContentState missing selectionAfter');
+    return selection;
   }
 
-  getBlockForKey(key: string): ContentBlock {
-    var block: ContentBlock = this.getBlockMap().get(key);
-    return block;
+  getBlockForKey(key: string): ?ContentBlock {
+    return this.getBlockMap().get(key);
   }
 
   getKeyBefore(key: string): ?string {
@@ -101,15 +110,19 @@ class ContentState extends ContentStateRecord {
   }
 
   getBlocksAsArray(): Array<ContentBlock> {
-    return this.getBlockMap().toArray();
+    return this.getBlockMap().valueSeq().toArray();
   }
 
   getFirstBlock(): ContentBlock {
-    return this.getBlockMap().first();
+    const block = this.getBlockMap().first();
+    invariant(block, 'ContentState blockMap is empty');
+    return block;
   }
 
   getLastBlock(): ContentBlock {
-    return this.getBlockMap().last();
+    const block = this.getBlockMap().last();
+    invariant(block, 'ContentState blockMap is empty');
+    return block;
   }
 
   getPlainText(delimiter?: string): string {
@@ -126,10 +139,9 @@ class ContentState extends ContentStateRecord {
   }
 
   hasText(): boolean {
-    var blockMap = this.getBlockMap();
     return (
-      blockMap.size > 1 ||
-      blockMap.first().getLength() > 0
+      this.getBlockMap().size > 1 ||
+      this.getFirstBlock().getLength() > 0
     );
   }
 
@@ -186,7 +198,7 @@ class ContentState extends ContentStateRecord {
     var blockMap = BlockMapBuilder.createFromArray(theBlocks);
     var selectionState = blockMap.isEmpty()
       ? new SelectionState()
-      : SelectionState.createEmpty(blockMap.first().getKey());
+      : SelectionState.createEmpty(nullthrows(blockMap.first()).getKey());
     return new ContentState({
       blockMap,
       entityMap: entityMap || DraftEntity,

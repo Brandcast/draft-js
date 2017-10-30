@@ -19,6 +19,8 @@ import type {List} from 'immutable';
 
 var Immutable = require('immutable');
 
+var nullthrows = require('nullthrows');
+
 function removeRangeFromContentState(
   contentState: ContentState,
   selectionState: SelectionState,
@@ -33,8 +35,8 @@ function removeRangeFromContentState(
   var endKey = selectionState.getEndKey();
   var endOffset = selectionState.getEndOffset();
 
-  var startBlock = blockMap.get(startKey);
-  var endBlock = blockMap.get(endKey);
+  var startBlock = nullthrows(blockMap.get(startKey));
+  var endBlock = nullthrows(blockMap.get(endKey));
   var characterList;
 
   if (startBlock === endBlock) {
@@ -58,14 +60,17 @@ function removeRangeFromContentState(
     characterList,
   });
 
-  var newBlocks = blockMap
+  blockMap = blockMap
     .toSeq()
     .skipUntil((_, k) => k === startKey)
     .takeUntil((_, k) => k === endKey)
     .concat(Immutable.Map([[endKey, null]]))
-    .map((_, k) => { return k === startKey ? modifiedStart : null; });
-
-  blockMap = blockMap.merge(newBlocks).filter(block => !!block);
+    .reduceRight((acc, _, k) => {
+      if (k === startKey) {
+        return acc.set(k, modifiedStart);
+      }
+      return acc.delete(k);
+    }, blockMap);
 
   return contentState.merge({
     blockMap,

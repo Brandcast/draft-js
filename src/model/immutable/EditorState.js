@@ -17,13 +17,15 @@ import type {DraftDecoratorType} from 'DraftDecoratorType';
 import type {DraftInlineStyle} from 'DraftInlineStyle';
 import type {EditorChangeType} from 'EditorChangeType';
 import type {EntityMap} from 'EntityMap';
-import type {List, OrderedMap} from 'immutable';
+import type {List, OrderedMap, RecordFactory} from 'immutable';
 
 var BlockTree = require('BlockTree');
 var ContentState = require('ContentState');
 var EditorBidiService = require('EditorBidiService');
 var Immutable = require('immutable');
 var SelectionState = require('SelectionState');
+
+var nullthrows = require('nullthrows');
 
 var {
   OrderedSet,
@@ -63,7 +65,9 @@ var defaultRecord: EditorStateRecordType = {
   undoStack: Stack(),
 };
 
-var EditorStateRecord = Record(defaultRecord);
+var EditorStateRecord: RecordFactory<EditorStateRecordType> = Record(
+  defaultRecord,
+);
 
 class EditorState {
   _immutable: EditorStateRecord;
@@ -81,7 +85,7 @@ class EditorState {
     contentState: ContentState,
     decorator?: ?DraftDecoratorType,
   ): EditorState {
-    var firstKey = contentState.getBlockMap().first().getKey();
+    var firstKey = nullthrows(contentState.getBlockMap().first()).getKey();
     return EditorState.create({
       currentContent: contentState,
       undoStack: Stack(),
@@ -116,7 +120,7 @@ class EditorState {
       var newContent = put.currentContent || editorState.getCurrentContent();
 
       if (decorator !== existingDecorator) {
-        var treeMap: OrderedMap<any, any> = state.get('treeMap');
+        var treeMap: OrderedMap<any, any> = nullthrows(state.get('treeMap'));
         var newTreeMap;
         if (decorator && existingDecorator) {
           newTreeMap = regenerateTreeForNewDecorator(
@@ -166,7 +170,7 @@ class EditorState {
   }
 
   getCurrentContent(): ContentState {
-    return this.getImmutable().get('currentContent');
+    return nullthrows(this.getImmutable().get('currentContent'));
   }
 
   getUndoStack(): Stack<ContentState> {
@@ -178,7 +182,7 @@ class EditorState {
   }
 
   getSelection(): SelectionState {
-    return this.getImmutable().get('selection');
+    return nullthrows(this.getImmutable().get('selection'));
   }
 
   getDecorator(): ?DraftDecoratorType {
@@ -242,18 +246,19 @@ class EditorState {
   }
 
   getBlockTree(blockKey: string): List<any> {
-    return this.getImmutable().getIn(['treeMap', blockKey]);
+    return nullthrows(this.getImmutable().getIn(['treeMap', blockKey]));
   }
 
   isSelectionAtStartOfContent(): boolean {
-    var firstKey = this.getCurrentContent().getBlockMap().first().getKey();
+    var firstBlock = nullthrows(this.getCurrentContent().getBlockMap().first());
+    var firstKey = firstBlock.getKey();
     return this.getSelection().hasEdgeWithin(firstKey, 0, 0);
   }
 
   isSelectionAtEndOfContent(): boolean {
     var content = this.getCurrentContent();
     var blockMap = content.getBlockMap();
-    var last = blockMap.last();
+    var last = nullthrows(blockMap.last());
     var end = last.getLength();
     return this.getSelection().hasEdgeWithin(last.getKey(), end, end);
   }
@@ -522,6 +527,9 @@ function generateNewTreeMap(
   contentState: ContentState,
   decorator?: ?DraftDecoratorType,
 ): OrderedMap<string, List<any>> {
+  /* $FlowFixMe(>=0.53.0 site=www,mobile) -
+   * should be fixed by * https://github.com/facebook/immutable-js/pull/1112
+   */
   return contentState
     .getBlockMap()
     .map(block => BlockTree.generate(contentState, block, decorator))
@@ -544,7 +552,7 @@ function regenerateTreeForNewBlocks(
     newEntityMap,
   );
   var prevBlockMap = contentState.getBlockMap();
-  var prevTreeMap = editorState.getImmutable().get('treeMap');
+  var prevTreeMap = nullthrows(editorState.getImmutable().get('treeMap'));
   return prevTreeMap.merge(
     newBlockMap
       .toSeq()
@@ -568,6 +576,9 @@ function regenerateTreeForNewDecorator(
   decorator: DraftDecoratorType,
   existingDecorator: DraftDecoratorType,
 ): OrderedMap<string, List<any>> {
+  /* $FlowFixMe(>=0.53.0 site=www,mobile) -
+   * should be fixed by * https://github.com/facebook/immutable-js/pull/1112
+   */
   return previousTreeMap.merge(
     blockMap
       .toSeq()
@@ -607,7 +618,7 @@ function getInlineStyleForCollapsedSelection(
 ): DraftInlineStyle {
   var startKey = selection.getStartKey();
   var startOffset = selection.getStartOffset();
-  var startBlock = content.getBlockForKey(startKey);
+  var startBlock = nullthrows(content.getBlockForKey(startKey));
 
   // If the cursor is not at the start of the block, look backward to
   // preserve the style of the preceding character.
@@ -631,7 +642,7 @@ function getInlineStyleForNonCollapsedSelection(
 ): DraftInlineStyle {
   var startKey = selection.getStartKey();
   var startOffset = selection.getStartOffset();
-  var startBlock = content.getBlockForKey(startKey);
+  var startBlock = nullthrows(content.getBlockForKey(startKey));
 
   // If there is a character just inside the selection, use its style.
   if (startOffset < startBlock.getLength()) {

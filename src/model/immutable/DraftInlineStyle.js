@@ -12,6 +12,6 @@
 
 'use strict';
 
-import type Immutable from 'immutable';
+import type {OrderedSet} from 'immutable';
 
-export type DraftInlineStyle = Immutable.OrderedSet<string>;
+export type DraftInlineStyle = OrderedSet<string>;

@@ -17,6 +17,7 @@ import type SelectionState from 'SelectionState';
 
 var DraftOffsetKey = require('DraftOffsetKey');
 
+var invariant = require('invariant');
 var nullthrows = require('nullthrows');
 
 function getUpdatedSelectionState(
@@ -61,6 +62,10 @@ function getUpdatedSelectionState(
       focusPath.leafKey,
     ]);
 
+  invariant(
+    anchorLeaf !== undefined && focusLeaf !== undefined,
+    'Error: missing anchorLeaf or focusLeaf.',
+  );
   var anchorLeafStart: number = anchorLeaf.get('start');
   var focusLeafStart: number = focusLeaf.get('start');
 
@@ -100,11 +105,18 @@ function getUpdatedSelectionState(
     isBackward = startKey === focusBlockKey;
   }
 
+  var nextAnchorOffset = anchorBlockOffset != null ?
+    {anchorOffset: anchorBlockOffset} :
+    {};
+  var nextFocusOffset = focusBlockOffset != null ?
+    {focusOffset: focusBlockOffset} :
+    {};
+
   return selection.merge({
     anchorKey: anchorBlockKey,
-    anchorOffset: anchorBlockOffset,
+    ...nextAnchorOffset,
     focusKey: focusBlockKey,
-    focusOffset: focusBlockOffset,
+    ...nextFocusOffset,
     isBackward,
   });
 }
