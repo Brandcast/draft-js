@@ -36,10 +36,11 @@ function getAnonymizedDOM(
   }
 
   invariant(
-    anonymized instanceof Element,
+    anonymized.nodeType === Node.ELEMENT_NODE,
     'Node must be an Element if it is not a text node.',
   );
-  return anonymized.outerHTML;
+  var element: Element = (anonymized: any);
+  return element.outerHTML;
 }
 
 function anonymizeTextWithin(
@@ -77,15 +78,14 @@ function getAnonymizedEditorDOM(
   // grabbing the DOM content of the Draft editor
   let currentNode = node;
   while (currentNode) {
-    if (
-      currentNode instanceof Element &&
-      currentNode.hasAttribute('contenteditable')
-    ) {
-      // found the Draft editor container
-      return getAnonymizedDOM(currentNode, getNodeLabels);
-    } else {
-      currentNode = currentNode.parentNode;
+    if (currentNode.nodeType === 1) {
+      const currentElement: Element = (currentNode: any);
+      if (currentElement.hasAttribute('contenteditable')) {
+        // found the Draft editor container
+        return getAnonymizedDOM(currentNode, getNodeLabels);
+      }
     }
+    currentNode = currentNode.parentNode;
   }
   return 'Could not find contentEditable parent of node';
 }
@@ -112,14 +112,17 @@ function setDraftEditorSelection(
   nodeStart: number,
   nodeEnd: number,
 ): void {
+
+  var ownerDocument = node.ownerDocument;
+
   // It's possible that the editor has been removed from the DOM but
   // our selection code doesn't know it yet. Forcing selection in
   // this case may lead to errors, so just bail now.
-  if (!containsNode(document.documentElement, node)) {
+  if (!containsNode(ownerDocument.documentElement, node)) {
     return;
   }
 
-  var selection = global.getSelection();
+  var selection = ownerDocument.defaultView.getSelection();
   var anchorKey = selectionState.getAnchorKey();
   var anchorOffset = selectionState.getAnchorOffset();
   var focusKey = selectionState.getFocusKey();
@@ -235,7 +238,7 @@ function addFocusToSelection(
   offset: number,
   selectionState: SelectionState,
 ): void {
-  const activeElement = getActiveElement();
+  const activeElement = getActiveElement(node.ownerDocument);
   if (selection.extend && containsNode(activeElement, node)) {
     // If `extend` is called while another element has focus, an error is
     // thrown. We therefore disable `extend` if the active element is somewhere
@@ -316,7 +319,7 @@ function addPointToSelection(
   offset: number,
   selectionState: SelectionState,
 ): void {
-  var range = document.createRange();
+  var range = node.ownerDocument.createRange();
   // logging to catch bug that is being reported in t16250795
   if (offset > getNodeLength(node)) {
     // in this case we know that the call to 'range.setStart' is about to throw

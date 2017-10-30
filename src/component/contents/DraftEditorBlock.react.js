@@ -97,23 +97,24 @@ class DraftEditorBlock extends React.Component<Props> {
     var blockNode = ReactDOM.findDOMNode(this);
     var scrollParent = Style.getScrollParent(blockNode);
     var scrollPosition = getScrollPosition(scrollParent);
+    var win = blockNode.ownerDocument.defaultView;
     var scrollDelta;
 
-    if (scrollParent === window) {
+    if (scrollParent === win) {
       var nodePosition = getElementPosition(blockNode);
       var nodeBottom = nodePosition.y + nodePosition.height;
       var viewportHeight = getViewportDimensions().height;
       scrollDelta = nodeBottom - viewportHeight;
       if (scrollDelta > 0) {
-        window.scrollTo(
+        win.scrollTo(
           scrollPosition.x,
           scrollPosition.y + scrollDelta + SCROLL_BUFFER,
         );
       }
     } else {
       invariant(
-        blockNode instanceof HTMLElement,
-        'blockNode is not an HTMLElement',
+        blockNode.nodeType === 1,
+        'blockNode is not an Element',
       );
       var blockBottom = blockNode.offsetHeight + blockNode.offsetTop;
       var scrollBottom = scrollParent.offsetHeight + scrollPosition.y;

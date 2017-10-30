@@ -26,7 +26,6 @@ const DraftEditorContents = require('DraftEditorContents.react');
 const DraftEditorDragHandler = require('DraftEditorDragHandler');
 const DraftEditorEditHandler = require('DraftEditorEditHandler');
 const DraftEditorPlaceholder = require('DraftEditorPlaceholder.react');
-const DraftFeatureFlags = require('DraftFeatureFlags');
 const EditorState = require('EditorState');
 const React = require('React');
 const ReactDOM = require('ReactDOM');
@@ -268,8 +267,6 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
               // here which makes its autotranslation skip over this subtree.
               'notranslate': !readOnly,
               'public/DraftEditor/content': true,
-              'public/DraftEditor/highlightInvalidText':
-                DraftFeatureFlags.draft_highlight_invalid_text,
             })}
             contentEditable={!readOnly}
             data-testid={this.props.webDriverTestID}
@@ -299,9 +296,6 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
             style={contentStyle}
             suppressContentEditableWarning
             tabIndex={this.props.tabIndex}>
-            {
-              }
-            {}
             {/* $FlowFixMe(>=0.53.0 site=www,mobile) This comment suppresses an
               * error when upgrading Flow's support for React. Common errors
               * found when upgrading Flow's React support are documented at
@@ -336,7 +330,8 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
      * ie9-beta-minor-change-list.aspx
      */
     if (isIE) {
-      document.execCommand('AutoUrlDetect', false, false);
+      ReactDOM.findDOMNode(this.refs.editor)
+        .ownerDocument.execCommand('AutoUrlDetect', false, false);
     }
   }
 
@@ -381,14 +376,15 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
     const {x, y} = scrollPosition || getScrollPosition(scrollParent);
 
     invariant(
-      editorNode instanceof HTMLElement,
-      'editorNode is not an HTMLElement',
+      editorNode.nodeType === 1,
+      'editorNode is not an Element',
     );
     editorNode.focus();
 
     // Restore scroll position
-    if (scrollParent === window) {
-      window.scrollTo(x, y);
+    const {defaultView} = editorNode.ownerDocument;
+    if (scrollParent === defaultView) {
+      defaultView.scrollTo(x, y);
     } else {
       Scroll.setTop(scrollParent, y);
     }
@@ -410,8 +406,8 @@ class DraftEditor extends React.Component<DraftEditorProps, State> {
   _blur(): void {
     const editorNode = ReactDOM.findDOMNode(this.refs.editor);
     invariant(
-      editorNode instanceof HTMLElement,
-      'editorNode is not an HTMLElement',
+      editorNode.nodeType === 1,
+      'editorNode is not an Element',
     );
     editorNode.blur();
   }
