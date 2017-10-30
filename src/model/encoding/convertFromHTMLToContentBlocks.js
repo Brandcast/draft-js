@@ -140,7 +140,7 @@ function getListBlockType(tag: string, lastList: ?string): ?DraftBlockType {
 function getBlockMapSupportedTags(
   blockRenderMap: DraftBlockRenderMap,
 ): Array<string> {
-  const unstyledElement = blockRenderMap.get('unstyled').element;
+  const unstyledElement = nullthrows(blockRenderMap.get('unstyled')).element;
   let tags = Set([]);
 
   blockRenderMap.forEach((draftBlock: DraftBlockRenderConfig) => {

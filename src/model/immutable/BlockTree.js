@@ -17,6 +17,7 @@ import type CharacterMetadata from 'CharacterMetadata';
 import type ContentBlock from 'ContentBlock';
 import type ContentState from 'ContentState';
 import type {DraftDecoratorType} from 'DraftDecoratorType';
+import type {RecordFactory} from 'immutable';
 
 var Immutable = require('immutable');
 
@@ -29,29 +30,35 @@ var returnTrue = emptyFunction.thatReturnsTrue;
 
 var FINGERPRINT_DELIMITER = '-';
 
-var defaultLeafRange: {
-  start: ?number,
-  end: ?number,
-} = {
-  start: null,
-  end: null,
+type LeafRangeProps = {
+  start: number,
+  end: number,
 };
 
-var LeafRange = Record(defaultLeafRange);
+var defaultLeafRange: LeafRangeProps = {
+  start: 0,
+  end: 0,
+};
 
-var defaultDecoratorRange: {
-  start: ?number,
-  end: ?number,
+var LeafRange: RecordFactory<LeafRangeProps> = Record(defaultLeafRange);
+
+type DecoratorRangeProps = {
+  start: number,
+  end: number,
   decoratorKey: ?string,
-  leaves: ?List<LeafRange>,
-} = {
-  start: null,
-  end: null,
-  decoratorKey: null,
-  leaves: null,
+  leaves: List<LeafRange>,
 };
 
-var DecoratorRange = Record(defaultDecoratorRange);
+var defaultDecoratorRange: DecoratorRangeProps = {
+  start: 0,
+  end: 0,
+  decoratorKey: null,
+  leaves: List(),
+};
+
+var DecoratorRange: RecordFactory<DecoratorRangeProps> = Record(
+  defaultDecoratorRange,
+);
 
 var BlockTree = {
   /**
@@ -105,7 +112,7 @@ var BlockTree = {
       .map(leafSet => {
         var decoratorKey = leafSet.get('decoratorKey');
         var fingerprintString =
-          decoratorKey !== null
+          decoratorKey != null
             ? decoratorKey + '.' + (leafSet.get('end') - leafSet.get('start'))
             : '';
         return '' + fingerprintString + '.' + leafSet.get('leaves').size;

@@ -28,11 +28,10 @@ const nullthrows = require('nullthrows');
 
 const RichTextEditorUtil = {
   currentBlockContainsLink: function(editorState: EditorState): boolean {
-    var selection = editorState.getSelection();
+    const selection = editorState.getSelection();
     const contentState = editorState.getCurrentContent();
     const entityMap = contentState.getEntityMap();
-    return contentState
-      .getBlockForKey(selection.getAnchorKey())
+    return nullthrows(contentState.getBlockForKey(selection.getAnchorKey()))
       .getCharacterList()
       .slice(selection.getStartOffset(), selection.getEndOffset())
       .some(v => {
@@ -42,11 +41,11 @@ const RichTextEditorUtil = {
   },
 
   getCurrentBlockType: function(editorState: EditorState): DraftBlockType {
-    var selection = editorState.getSelection();
-    return editorState
-      .getCurrentContent()
-      .getBlockForKey(selection.getStartKey())
-      .getType();
+    const selection = editorState.getSelection();
+    const content = editorState.getCurrentContent();
+    return nullthrows(
+      content.getBlockForKey(selection.getStartKey()),
+    ).getType();
   },
 
   getDataObjectForLinkURL: function(uri: URI): Object {
@@ -159,7 +158,7 @@ const RichTextEditorUtil = {
 
     const content = editorState.getCurrentContent();
     const startKey = selection.getStartKey();
-    const block = content.getBlockForKey(startKey);
+    const block = nullthrows(content.getBlockForKey(startKey));
     const length = block.getLength();
 
     // The cursor is somewhere within the text. Behave normally.
@@ -203,7 +202,7 @@ const RichTextEditorUtil = {
     }
 
     var content = editorState.getCurrentContent();
-    var block = content.getBlockForKey(key);
+    var block = nullthrows(content.getBlockForKey(key));
     var type = block.getType();
     if (type !== 'unordered-list-item' && type !== 'ordered-list-item') {
       return editorState;
@@ -280,10 +279,8 @@ const RichTextEditorUtil = {
       return editorState;
     }
 
-    var typeToSet =
-      content.getBlockForKey(startKey).getType() === blockType
-        ? 'unstyled'
-        : blockType;
+    var block = nullthrows(content.getBlockForKey(startKey));
+    var typeToSet = block.getType() === blockType ? 'unstyled' : blockType;
 
     return EditorState.push(
       editorState,
@@ -368,8 +365,8 @@ const RichTextEditorUtil = {
   },
 
   /**
-   * When a collapsed cursor is at the start of the first styled block, or 
-   * an empty styled block, changes block to 'unstyled'. Returns null if 
+   * When a collapsed cursor is at the start of the first styled block, or
+   * an empty styled block, changes block to 'unstyled'. Returns null if
    * block or selection does not meet that criteria.
    */
   tryToRemoveBlockStyle: function(editorState: EditorState): ?ContentState {
@@ -378,7 +375,7 @@ const RichTextEditorUtil = {
     if (selection.isCollapsed() && offset === 0) {
       var key = selection.getAnchorKey();
       var content = editorState.getCurrentContent();
-      var block = content.getBlockForKey(key);
+      var block = nullthrows(content.getBlockForKey(key));
 
       var firstBlock = content.getFirstBlock();
       if (block.getLength() > 0 && block !== firstBlock) {

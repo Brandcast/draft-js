@@ -123,7 +123,7 @@ describe('insertFragmentIntoContentState', () => {
     var modified = insertFragmentIntoContentState(content, selection, fragment);
 
     var newBlock = modified.getBlockMap().first();
-    var secondBlock = modified.getBlockMap().toArray()[1];
+    var secondBlock = modified.getBlockMap().valueSeq().toArray()[1];
 
     expect(newBlock.getText()).toBe('xx');
     expect(newBlock.getData()).toBe(data);

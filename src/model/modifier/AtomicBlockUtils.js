@@ -24,6 +24,7 @@ const EditorState = require('EditorState');
 const Immutable = require('immutable');
 const SelectionState = require('SelectionState');
 
+const nullthrows = require('nullthrows');
 const generateRandomKey = require('generateRandomKey');
 const moveBlockInContentState = require('moveBlockInContentState');
 
@@ -99,10 +100,12 @@ const AtomicBlockUtils = {
     let withMovedAtomicBlock;
 
     if (insertionMode === 'before' || insertionMode === 'after') {
-      const targetBlock = contentState.getBlockForKey(
-        insertionMode === 'before'
-          ? targetRange.getStartKey()
-          : targetRange.getEndKey(),
+      const targetBlock = nullthrows(
+        contentState.getBlockForKey(
+          insertionMode === 'before'
+            ? targetRange.getStartKey()
+            : targetRange.getEndKey(),
+        ),
       );
 
       withMovedAtomicBlock = moveBlockInContentState(
@@ -119,8 +122,8 @@ const AtomicBlockUtils = {
       );
 
       const selectionAfterRemoval = afterRemoval.getSelectionAfter();
-      const targetBlock = afterRemoval.getBlockForKey(
-        selectionAfterRemoval.getFocusKey(),
+      const targetBlock = nullthrows(
+        afterRemoval.getBlockForKey(selectionAfterRemoval.getFocusKey()),
       );
 
       if (selectionAfterRemoval.getStartOffset() === 0) {
@@ -146,8 +149,8 @@ const AtomicBlockUtils = {
         );
 
         const selectionAfterSplit = afterSplit.getSelectionAfter();
-        const targetBlock = afterSplit.getBlockForKey(
-          selectionAfterSplit.getFocusKey(),
+        const targetBlock = nullthrows(
+          afterSplit.getBlockForKey(selectionAfterSplit.getFocusKey()),
         );
 
         withMovedAtomicBlock = moveBlockInContentState(

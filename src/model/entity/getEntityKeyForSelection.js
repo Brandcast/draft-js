@@ -18,6 +18,8 @@ import type ContentState from 'ContentState';
 import type {EntityMap} from 'EntityMap';
 import type SelectionState from 'SelectionState';
 
+const nullthrows = require('nullthrows');
+
 /**
  * Return the entity key that should be used when inserting text for the
  * specified target selection, only if the entity is `MUTABLE`. `IMMUTABLE`
@@ -33,7 +35,8 @@ function getEntityKeyForSelection(
     var key = targetSelection.getAnchorKey();
     var offset = targetSelection.getAnchorOffset();
     if (offset > 0) {
-      entityKey = contentState.getBlockForKey(key).getEntityAt(offset - 1);
+      entityKey = nullthrows(contentState.getBlockForKey(key))
+        .getEntityAt(offset - 1);
       return filterKey(contentState.getEntityMap(), entityKey);
     }
     return null;
@@ -41,7 +44,7 @@ function getEntityKeyForSelection(
 
   var startKey = targetSelection.getStartKey();
   var startOffset = targetSelection.getStartOffset();
-  var startBlock = contentState.getBlockForKey(startKey);
+  var startBlock = nullthrows(contentState.getBlockForKey(startKey));
 
   entityKey =
     startOffset === startBlock.getLength()

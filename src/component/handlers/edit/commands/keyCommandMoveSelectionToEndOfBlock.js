@@ -15,6 +15,8 @@
 
 var EditorState = require('EditorState');
 
+var nullthrows = require('nullthrows');
+
 /**
  * See comment for `moveSelectionToStartOfBlock`.
  */
@@ -24,7 +26,7 @@ function keyCommandMoveSelectionToEndOfBlock(
   var selection = editorState.getSelection();
   var endKey = selection.getEndKey();
   var content = editorState.getCurrentContent();
-  var textLength = content.getBlockForKey(endKey).getLength();
+  var textLength = nullthrows(content.getBlockForKey(endKey)).getLength();
   return EditorState.set(editorState, {
     selection: selection.merge({
       anchorKey: endKey,

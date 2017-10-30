@@ -17,6 +17,7 @@ var DraftRemovableWord = require('DraftRemovableWord');
 var EditorState = require('EditorState');
 
 var moveSelectionBackward = require('moveSelectionBackward');
+var nullthrows = require('nullthrows');
 var removeTextWithStrategy = require('removeTextWithStrategy');
 
 /**
@@ -35,8 +36,7 @@ function keyCommandBackspaceWord(editorState: EditorState): EditorState {
       }
       var key = selection.getStartKey();
       var content = strategyState.getCurrentContent();
-      var text = content
-        .getBlockForKey(key)
+      var text = nullthrows(content.getBlockForKey(key))
         .getText()
         .slice(0, offset);
       var toRemove = DraftRemovableWord.getBackward(text);

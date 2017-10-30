@@ -23,6 +23,7 @@ var CharacterMetadata = require('CharacterMetadata');
 
 var findRangesImmutable = require('findRangesImmutable');
 var invariant = require('invariant');
+var nullthrows = require('nullthrows');
 
 function removeEntitiesAtEdges(
   contentState: ContentState,
@@ -35,7 +36,7 @@ function removeEntitiesAtEdges(
 
   var startKey = selectionState.getStartKey();
   var startOffset = selectionState.getStartOffset();
-  var startBlock = blockMap.get(startKey);
+  var startBlock = nullthrows(blockMap.get(startKey));
   var updatedStart = removeForBlock(entityMap, startBlock, startOffset);
 
   if (updatedStart !== startBlock) {
@@ -44,10 +45,9 @@ function removeEntitiesAtEdges(
 
   var endKey = selectionState.getEndKey();
   var endOffset = selectionState.getEndOffset();
-  var endBlock = blockMap.get(endKey);
-  if (startKey === endKey) {
-    endBlock = updatedStart;
-  }
+  var endBlock = startKey === endKey ?
+    updatedStart :
+    nullthrows(blockMap.get(endKey));
 
   var updatedEnd = removeForBlock(entityMap, endBlock, endOffset);
 
@@ -74,7 +74,7 @@ function getRemovalRange(
   findRangesImmutable(
     characters,
     (a, b) => a.getEntity() === b.getEntity(),
-    element => element.getEntity() === key,
+    element => !!(element && element.getEntity() === key),
     (start, end) => {
       if (start <= offset && end >= offset) {
         removalRange = {start, end};
@@ -105,7 +105,7 @@ function removeForBlock(
       var {start, end} = getRemovalRange(chars, entityAfterCursor, offset);
       var current;
       while (start < end) {
-        current = chars.get(start);
+        current = nullthrows(chars.get(start));
         chars = chars.set(start, CharacterMetadata.applyEntity(current, null));
         start++;
       }

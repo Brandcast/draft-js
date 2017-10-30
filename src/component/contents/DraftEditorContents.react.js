@@ -21,6 +21,7 @@ const DraftEditorBlock = require('DraftEditorBlock.react');
 const DraftOffsetKey = require('DraftOffsetKey');
 const EditorState = require('EditorState');
 const React = require('React');
+const UnicodeBidiDirection = require('UnicodeBidiDirection');
 
 const cx = require('cx');
 const joinClasses = require('joinClasses');
@@ -138,7 +139,7 @@ class DraftEditorContents extends React.Component<Props> {
       const {textDirectionality} = this.props;
       const direction = textDirectionality
         ? textDirectionality
-        : directionMap.get(key);
+        : directionMap.get(key, UnicodeBidiDirection.LTR);
       const offsetKey = DraftOffsetKey.encode(key, 0, 0);
       const componentProps = {
         contentState: content,

@@ -25,14 +25,16 @@ var {List, Map, OrderedSet, Record} = Immutable;
 
 const EMPTY_SET = OrderedSet();
 
-var defaultRecord: {
+type RecordProps = {
   key: string,
   type: DraftBlockType,
   text: string,
   characterList: List<CharacterMetadata>,
   depth: number,
   data: Map<any, any>,
-} = {
+};
+
+var defaultRecord: RecordProps = {
   key: '',
   type: 'unstyled',
   text: '',
@@ -43,7 +45,8 @@ var defaultRecord: {
 
 var ContentBlockRecord = Record(defaultRecord);
 
-class ContentBlock extends ContentBlockRecord {
+class ContentBlock extends ContentBlockRecord<RecordProps> {
+
   getKey(): string {
     return this.get('key');
   }
@@ -86,7 +89,7 @@ class ContentBlock extends ContentBlockRecord {
    * Execute a callback for every contiguous range of styles within the block.
    */
   findStyleRanges(
-    filterFn: (value: CharacterMetadata) => boolean,
+    filterFn: (value: ?CharacterMetadata) => boolean,
     callback: (start: number, end: number) => void,
   ): void {
     findRangesImmutable(
@@ -101,7 +104,7 @@ class ContentBlock extends ContentBlockRecord {
    * Execute a callback for every contiguous range of entities within the block.
    */
   findEntityRanges(
-    filterFn: (value: CharacterMetadata) => boolean,
+    filterFn: (value: ?CharacterMetadata) => boolean,
     callback: (start: number, end: number) => void,
   ): void {
     findRangesImmutable(

@@ -18,14 +18,16 @@ var Immutable = require('immutable');
 
 var {Record} = Immutable;
 
-var defaultRecord: {
+type RecordProps = {
   anchorKey: string,
   anchorOffset: number,
   focusKey: string,
   focusOffset: number,
   isBackward: boolean,
   hasFocus: boolean,
-} = {
+};
+
+var defaultRecord: RecordProps = {
   anchorKey: '',
   anchorOffset: 0,
   focusKey: '',
@@ -36,7 +38,8 @@ var defaultRecord: {
 
 var SelectionStateRecord = Record(defaultRecord);
 
-class SelectionState extends SelectionStateRecord {
+class SelectionState extends SelectionStateRecord<RecordProps> {
+
   serialize(): string {
     return (
       'Anchor: ' +
