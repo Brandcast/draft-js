@@ -7,6 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @providesModule editOnCut
+ * @format
  * @flow
  */
 
@@ -17,6 +18,7 @@ import type DraftEditor from 'DraftEditor.react';
 const DraftModifier = require('DraftModifier');
 const EditorState = require('EditorState');
 const Style = require('Style');
+const ReactDOM = require('ReactDOM');
 
 const getFragmentFromSelection = require('getFragmentFromSelection');
 const getScrollPosition = require('getScrollPosition');
@@ -42,9 +44,9 @@ function editOnCut(editor: DraftEditor, e: SyntheticClipboardEvent<>): void {
 
   // Track the current scroll position so that it can be forced back in place
   // after the editor regains control of the DOM.
-  // $FlowFixMe e.target should be an instanceof Node
-  const scrollParent = Style.getScrollParent(e.target);
-  const {x, y} = getScrollPosition(scrollParent);
+  const editorNode = ReactDOM.findDOMNode(editor.editor);
+  const scrollParent = Style.getScrollParent(editorNode);
+  const scrollPosition = getScrollPosition(scrollParent);
 
   const fragment = getFragmentFromSelection(editorState);
   editor.setClipboard(fragment);
@@ -54,7 +56,7 @@ function editOnCut(editor: DraftEditor, e: SyntheticClipboardEvent<>): void {
 
   // Let native `cut` behavior occur, then recover control.
   setTimeout(() => {
-    editor.restoreEditorDOM({x, y});
+    editor.restoreEditorDOM(scrollPosition);
     editor.exitCurrentMode();
     editor.update(removeFragment(editorState));
   }, 0);
